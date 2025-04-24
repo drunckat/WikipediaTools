@@ -32,88 +32,55 @@ namespace
         return oss.str();
     }
 }
+Graph::Graph(DatabaseManager& dbManager) : db(dbManager) {}
 
-void Graph::loadFromDatabase(std::optional<int> startPageId)
-{
-    sql::mysql::MySQL_Driver *driver = sql::mysql::get_mysql_driver_instance();
-    std::unique_ptr<sql::Connection> conn(driver->connect("tcp://localhost:3306", "root", "1111"));
-    conn->setSchema("wikipediadb");
+std::vector<NeighborInfo> Graph::getSortedNeighbors(int nodeId) {
+    std::vector<NeighborInfo> neighbors; std::cout << "graph.cpp 38" << std::endl;
+    for (const auto& [id, name, visitors] : db.getNeighborsSortedByVisitors(nodeId)) {
+        neighbors.push_back({id, name, visitors});
+    } std::cout << "graph.cpp 41" << std::endl;
+    return neighbors;
+}
 
+void Graph::loadFromDatabase(std::optional<int> startPageId) { std::cout << "graph.cpp 45" << std::endl;
     nodes.clear();
     edges.clear();
 
-    int center_id{};
-    if (startPageId)
-    {
-        center_id = *startPageId;
-        std::unique_ptr<sql::PreparedStatement> stmt(conn->prepareStatement(
-            "SELECT id, name FROM wikipediapages WHERE id = ?"));
-        stmt->setInt(1, *startPageId);
-        std::unique_ptr<sql::ResultSet> res(stmt->executeQuery());
-        if (res->next())
-        {
-            nodes[*startPageId] = Node{*startPageId, adjust_name(res->getString("name")), std::nullopt};
-        }
-    }
-    else
-    {
-        std::unique_ptr<sql::PreparedStatement> stmt(conn->prepareStatement(
-            "SELECT id, name FROM wikipediapages WHERE id = (SELECT page_id FROM (select page_id, count(*) cnt from pagereferences group by page_id ORDER BY cnt DESC LIMIT 1) tbl)"));
-        std::unique_ptr<sql::ResultSet> res(stmt->executeQuery());
-        center_id = res->getInt("id");
-        if (res->next())
-        {
-            nodes[res->getInt("id")] = Node{res->getInt("id"), adjust_name(res->getString("name")), std::nullopt};
-        }
+    int center_id;
+    std::string center_name;
+
+    if (startPageId) {
+        auto page = db.getPageById(*startPageId);
+        if (!page) return;
+        center_id = page->first;
+        center_name = page->second;
+    } else {
+        auto [id, name] = db.getMostReferencedPage();
+        center_id = id;
+        center_name = name;
     }
 
-    std::vector<int> firstLevel;
+    nodes[center_id] = Node{center_id, adjust_name(center_name), std::nullopt};
+
     std::unordered_set<int> passed{center_id};
-    std::unordered_set<int> secondLevelAdded;
+    std::vector<int> firstLevel;
 
-    {
-        std::unique_ptr<sql::PreparedStatement> stmt(conn->prepareStatement(
-            "SELECT p.referenced_page_id, w.name FROM pagereferences p "
-            "JOIN wikipediapages w ON p.referenced_page_id = w.id "
-            "WHERE p.page_id = ? ORDER BY w.visitors_last_5_days DESC"));
-        stmt->setInt(1, *startPageId);
-        std::unique_ptr<sql::ResultSet> res(stmt->executeQuery());
-
-        std::size_t counter = 0;
-        while (res->next())
-        {
-            int neighborId = res->getInt("referenced_page_id");
-            if (counter++ < 10)
-            {
-                nodes[neighborId] = Node{neighborId, adjust_name(res->getString("name")), std::nullopt};
-                edges.push_back({*startPageId, neighborId});
-            }
-            passed.emplace(neighborId);
-            firstLevel.emplace_back(neighborId);
-        }
+    auto neighbors = db.getReferencesSorted(center_id, 10);
+    for (const auto& [id, name] : neighbors) {
+        nodes[id] = Node{id, adjust_name(name), std::nullopt};
+        edges.push_back({center_id, id});
+        passed.insert(id);
+        firstLevel.push_back(id);
     }
 
-    for (std::size_t i = 0; i < firstLevel.size() && i < 10; ++i)
-    {
+    for (std::size_t i = 0; i < firstLevel.size(); ++i) {
         auto joined = join(passed, ", ");
-        std::unique_ptr<sql::PreparedStatement> stmt(conn->prepareStatement(
-            "SELECT p.referenced_page_id, w.name FROM pagereferences p "
-            "INNER JOIN wikipediapages w ON p.referenced_page_id = w.id "
-            "WHERE p.page_id = ? AND referenced_page_id NOT IN (?) "
-            "ORDER BY w.visitors_last_5_days DESC LIMIT 3"));
-        stmt->setInt(1, firstLevel[i]);
-        stmt->setString(2, joined);
-        std::unique_ptr<sql::ResultSet> res(stmt->executeQuery());
-
-        while (res->next())
-        {
-            int secondId = res->getInt("referenced_page_id");
-            std::string name = adjust_name(res->getString("name"));
-            if (passed.emplace(secondId).second)
-            {
-                nodes[secondId] = Node{secondId, name, std::nullopt};
-                edges.push_back({firstLevel[i], secondId});
+        auto secondNeighbors = db.getReferencesExcluding(firstLevel[i], joined, 3);
+        for (const auto& [id, name] : secondNeighbors) {
+            if (passed.insert(id).second) {
+                nodes[id] = Node{id, adjust_name(name), std::nullopt};
+                edges.push_back({firstLevel[i], id});
             }
         }
-    }
+    } std::cout << "graph.cpp 85" << std::endl;
 }

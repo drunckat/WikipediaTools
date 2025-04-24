@@ -1,10 +1,18 @@
 #pragma once
 
+#include "DatabaseManager.h"
 #include <unordered_map>
 #include <vector>
 #include <string>
 #include <optional>
 #include <imgui.h>
+
+struct NeighborInfo
+{
+    int id;
+    std::string name;
+    int visitors;
+};
 
 struct Node
 {
@@ -22,8 +30,13 @@ struct Edge
 class Graph
 {
 public:
+    Graph(DatabaseManager &dbManager);
+
     std::unordered_map<int, Node> nodes;
     std::vector<Edge> edges;
-
+    std::vector<NeighborInfo> getSortedNeighbors(int nodeId);
     void loadFromDatabase(std::optional<int> startPageId = std::nullopt);
+
+private:
+    DatabaseManager &db;
 };

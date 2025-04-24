@@ -8,7 +8,7 @@
 #include <thread>
 
 static int currentNodeId = 0;
-static std::unordered_map<int, ImVec2> nodePositions; 
+static std::unordered_map<int, ImVec2> nodePositions;
 
 void randomizeNodePositions(Graph &graph, int centerId)
 {
@@ -47,7 +47,7 @@ void randomizeNodePositions(Graph &graph, int centerId)
 
         auto &children = level2[level1[i]];
         int childCount = std::min((int)children.size(), 6);
-        float spread = 30.0f * 3.14159265f / 180.0f; 
+        float spread = 30.0f * 3.14159265f / 180.0f;
         float startAngle = parentAngle - spread / 2.0f;
         float angleStep2 = spread / std::max(1, childCount - 1);
 
@@ -65,23 +65,25 @@ void loadSubGraph(Graph &graph, int nodeId)
     currentNodeId = nodeId;
     graph.nodes.clear();
     graph.edges.clear();
-
+    std::cout << "render.cpp 68" << std::endl;
     graph.loadFromDatabase(nodeId);
+    std::cout << "render.cpp 69" << std::endl;
     randomizeNodePositions(graph, nodeId);
 }
 
 void renderGraph(Graph &graph)
-{
+{std::cout << "render.cpp 75" << std::endl;
     if (graph.nodes.empty())
     {
         loadSubGraph(graph, currentNodeId);
     }
-
+    std::cout << "render.cpp 80" << std::endl;
     ImGui::Begin("Graph Visualization");
     ImNodes::BeginNodeEditor();
-
+    std::cout << "render.cpp 83" << std::endl;
     for (auto &[id, node] : graph.nodes)
     {
+        
         ImNodes::BeginNode(id);
         node.position = node.position.value_or(nodePositions[id]);
         ImNodes::SetNodeGridSpacePos(node.id, *node.position);
@@ -98,16 +100,44 @@ void renderGraph(Graph &graph)
 
         ImNodes::EndNode();
     }
+    std::cout << "render.cpp 101" << std::endl;
 
+    std::cout << "render.cpp 104" << std::endl;
     int linkId = 0;
     for (auto &[from, to] : graph.edges)
     {
+        
         ImNodes::Link(linkId++, from * 2 + 1, to * 2);
     }
-
-    ImNodes::EndNodeEditor();
-    ImGui::End();
-
+    std::cout << "render.cpp 110" << std::endl;
+    ImNodes::EndNodeEditor(); std::cout << "render.cpp 111" << std::endl;
+    ImGui::End(); std::cout << "render.cpp 112" << std::endl;
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+    {
+        int hoveredNodeId;
+        if (ImNodes::IsNodeHovered(&hoveredNodeId))
+        {
+            ImGui::OpenPopup("NeighborPopup");
+            currentNodeId = hoveredNodeId;
+        }
+    }
+    std::cout << "render.cpp 122" << std::endl;
+    static std::vector<NeighborInfo> neighbors;
+    std::cout << "render.cpp 124" << std::endl;
+    if (ImGui::BeginPopup("NeighborPopup"))
+    {
+        if (ImGui::BeginListBox("##neighbors", ImVec2(300, 200)))
+        {
+            neighbors = graph.getSortedNeighbors(currentNodeId); // db должен быть доступен
+            for (auto &n : neighbors)
+            {
+                ImGui::Text("%s (%d)", n.name.c_str(), n.visitors);
+            }
+            ImGui::EndListBox();
+        }
+        ImGui::EndPopup();
+    }
+    std::cout << "render.cpp 138" << std::endl;
     for (auto &[id, node] : graph.nodes)
     {
         if (ImNodes::IsNodeSelected(id))
@@ -116,7 +146,7 @@ void renderGraph(Graph &graph)
             break;
         }
     }
-
+    std::cout << "render.cpp 147" << std::endl;
     if (ImGui::IsMouseDoubleClicked(0))
     {
         for (auto &[id, node] : graph.nodes)
@@ -130,4 +160,5 @@ void renderGraph(Graph &graph)
             }
         }
     }
+    std::cout << "render.cpp 161" << std::endl;
 }

@@ -22,7 +22,7 @@ void checkGLErrors()
 
 int main()
 {
-    
+
     srand(static_cast<unsigned>(time(nullptr)));
     std::cout << "Start application" << std::endl;
 
@@ -61,10 +61,12 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
 
-    Graph graph;
+    DatabaseManager dbManager("tcp://localhost:3306", "root", "1111", "wikipediadb");
+    Graph graph(dbManager);
+    
     try
     {
-        graph.loadFromDatabase(1);
+        graph.loadFromDatabase();
     }
     catch (std::exception const &exc)
     {
@@ -73,7 +75,7 @@ int main()
         return 0;
     }
     std::cout << "Graph created" << std::endl;
-    
+
     randomizeNodePositions(graph, start);
 
     while (!glfwWindowShouldClose(window))
@@ -86,15 +88,15 @@ int main()
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
+        std::cout << "main.cpp 91" << std::endl;
         renderGraph(graph);
-
+        std::cout << "main.cpp 93" << std::endl;
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+        std::cout << "main.cpp 96" << std::endl;
         glfwSwapBuffers(window);
 
-        checkGLErrors();
+        checkGLErrors(); std::cout << "main.cpp 99" << std::endl;
     }
 
     std::cout << "Closing window" << std::endl;

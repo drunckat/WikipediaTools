@@ -14,6 +14,7 @@ set(VCPKG_DIR "${CMAKE_SOURCE_DIR}/vcpkg/vcpkg/installed/x64-windows")
 # Пути к заголовочным файлам
 include_directories(${CMAKE_SOURCE_DIR}/imnodes)
 include_directories(${CMAKE_SOURCE_DIR}/vcpkg/installed/x64-windows/include)
+include_directories(${CMAKE_SOURCE_DIR}/src/database)
 include_directories(${CMAKE_SOURCE_DIR}/src/data_structures)
 include_directories(${CMAKE_SOURCE_DIR}/src/rendering)
 include_directories(${MYSQL_CONNECTOR_DIR}/include/)
@@ -27,6 +28,7 @@ find_package(imgui CONFIG REQUIRED)
 add_executable(WikipediaGraph 
     src/main.cpp 
     src/data_structures/graph.cpp 
+    src/database/DatabaseManager.cpp 
     src/rendering/render.cpp
     imnodes/imnodes.cpp   # Добавляем исходник imnodes
 )
