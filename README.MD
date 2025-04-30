@@ -21,6 +21,7 @@
   - Ссылки на другие статьи Википедии
 - Сохраняет данные в базу данных MySQL:
   - Таблица `wikipediapages`: информация о статье
+```
 +----------------------+--------------+------+-----+-------------------+-------------------+
 | Field                | Type         | Null | Key | Default           | Extra             |
 +----------------------+--------------+------+-----+-------------------+-------------------+
@@ -30,8 +31,9 @@
 | volume               | int          | NO   |     | NULL              |                   |
 | created_at           | timestamp    | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
 +----------------------+--------------+------+-----+-------------------+-------------------+
-
+```
   - Таблица `pagereferences`: связи между статьями
+```
 +--------------------+------+------+-----+---------+----------------+
 | Field              | Type | Null | Key | Default | Extra          |
 +--------------------+------+------+-----+---------+----------------+
@@ -39,7 +41,7 @@
 | page_id            | int  | NO   | MUL | NULL    |                |
 | referenced_page_id | int  | NO   | MUL | NULL    |                |
 +--------------------+------+------+-----+---------+----------------+
-
+```
 ### Зависимости
 
 - C++23
@@ -48,13 +50,13 @@
 - [`MySQL Connector/C++`](https://dev.mysql.com/doc/connector-cpp/en/) — взаимодействие с базой данных
 
 ### Сборка
-
->cd WikipediaParser
->mkdir build
->cd build
->cmake ..
->cmake --build . --config Release
-
+```
+cd WikipediaParser
+mkdir build
+cd build
+cmake ..
+cmake --build . --config Release
+```
 
 ## WikipediaGraph
 
@@ -86,9 +88,10 @@
 - [GLEW](http://glew.sourceforge.net/) — доступ к функциям OpenGL
 
 ### Сборка
-
->cd WikipediaGraph
->mkdir build
->cd build
->cmake ..
->cmake --build . --config Debug
+```
+cd WikipediaGraph
+mkdir build
+cd build
+cmake ..
+cmake --build . --config Debug
+```
