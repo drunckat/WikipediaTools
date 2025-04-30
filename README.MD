@@ -49,14 +49,12 @@
 
 ### Сборка
 
-```bash
 cd WikipediaParser
 mkdir build
 cd build
 cmake ..
 cmake --build . --config Release
 
----
 
 ## WikipediaGraph
 
@@ -89,10 +87,8 @@ cmake --build . --config Release
 
 ### Сборка
 
-```bash
 cd WikipediaGraph
 mkdir build
 cd build
 cmake ..
 cmake --build . --config Debug
-```
