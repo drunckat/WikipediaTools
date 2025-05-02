@@ -32,29 +32,36 @@ namespace
         return oss.str();
     }
 }
-Graph::Graph(DatabaseManager& dbManager) : db(dbManager) {}
+Graph::Graph(database::DatabaseManager &dbManager) : db(dbManager) {}
 
-std::vector<NeighborInfo> Graph::getSortedNeighbors(int nodeId) {
-    std::vector<NeighborInfo> neighbors; std::cout << "graph.cpp 38" << std::endl;
-    for (const auto& [id, name, visitors] : db.getNeighborsSortedByVisitors(nodeId)) {
+std::vector<NeighborInfo> Graph::getSortedNeighbors(int nodeId)
+{
+    std::vector<NeighborInfo> neighbors;
+    for (const auto &[id, name, visitors] : db.getNeighborsSortedByVisitors(nodeId))
+    {
         neighbors.push_back({id, name, visitors});
-    } std::cout << "graph.cpp 41" << std::endl;
+    }
     return neighbors;
 }
 
-void Graph::loadFromDatabase(std::optional<int> startPageId) { std::cout << "graph.cpp 45" << std::endl;
+void Graph::loadFromDatabase(std::optional<int> startPageId)
+{
     nodes.clear();
     edges.clear();
 
     int center_id;
     std::string center_name;
 
-    if (startPageId) {
+    if (startPageId)
+    {
         auto page = db.getPageById(*startPageId);
-        if (!page) return;
+        if (!page)
+            return;
         center_id = page->first;
         center_name = page->second;
-    } else {
+    }
+    else
+    {
         auto [id, name] = db.getMostReferencedPage();
         center_id = id;
         center_name = name;
@@ -66,21 +73,25 @@ void Graph::loadFromDatabase(std::optional<int> startPageId) { std::cout << "gra
     std::vector<int> firstLevel;
 
     auto neighbors = db.getReferencesSorted(center_id, 10);
-    for (const auto& [id, name] : neighbors) {
+    for (const auto &[id, name] : neighbors)
+    {
         nodes[id] = Node{id, adjust_name(name), std::nullopt};
         edges.push_back({center_id, id});
         passed.insert(id);
         firstLevel.push_back(id);
     }
 
-    for (std::size_t i = 0; i < firstLevel.size(); ++i) {
+    for (std::size_t i = 0; i < firstLevel.size(); ++i)
+    {
         auto joined = join(passed, ", ");
         auto secondNeighbors = db.getReferencesExcluding(firstLevel[i], joined, 3);
-        for (const auto& [id, name] : secondNeighbors) {
-            if (passed.insert(id).second) {
+        for (const auto &[id, name] : secondNeighbors)
+        {
+            if (passed.insert(id).second)
+            {
                 nodes[id] = Node{id, adjust_name(name), std::nullopt};
                 edges.push_back({firstLevel[i], id});
             }
         }
-    } std::cout << "graph.cpp 85" << std::endl;
+    }
 }

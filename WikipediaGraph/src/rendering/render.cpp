@@ -65,25 +65,21 @@ void loadSubGraph(Graph &graph, int nodeId)
     currentNodeId = nodeId;
     graph.nodes.clear();
     graph.edges.clear();
-    std::cout << "render.cpp 68" << std::endl;
     graph.loadFromDatabase(nodeId);
-    std::cout << "render.cpp 69" << std::endl;
+
     randomizeNodePositions(graph, nodeId);
 }
 
 void renderGraph(Graph &graph)
-{std::cout << "render.cpp 75" << std::endl;
+{
     if (graph.nodes.empty())
     {
         loadSubGraph(graph, currentNodeId);
     }
-    std::cout << "render.cpp 80" << std::endl;
     ImGui::Begin("Graph Visualization");
     ImNodes::BeginNodeEditor();
-    std::cout << "render.cpp 83" << std::endl;
     for (auto &[id, node] : graph.nodes)
     {
-        
         ImNodes::BeginNode(id);
         node.position = node.position.value_or(nodePositions[id]);
         ImNodes::SetNodeGridSpacePos(node.id, *node.position);
@@ -100,18 +96,15 @@ void renderGraph(Graph &graph)
 
         ImNodes::EndNode();
     }
-    std::cout << "render.cpp 101" << std::endl;
 
-    std::cout << "render.cpp 104" << std::endl;
     int linkId = 0;
     for (auto &[from, to] : graph.edges)
     {
-        
+
         ImNodes::Link(linkId++, from * 2 + 1, to * 2);
     }
-    std::cout << "render.cpp 110" << std::endl;
-    ImNodes::EndNodeEditor(); std::cout << "render.cpp 111" << std::endl;
-    ImGui::End(); std::cout << "render.cpp 112" << std::endl;
+    ImNodes::EndNodeEditor();
+    ImGui::End();
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
     {
         int hoveredNodeId;
@@ -121,23 +114,56 @@ void renderGraph(Graph &graph)
             currentNodeId = hoveredNodeId;
         }
     }
-    std::cout << "render.cpp 122" << std::endl;
+
     static std::vector<NeighborInfo> neighbors;
-    std::cout << "render.cpp 124" << std::endl;
     if (ImGui::BeginPopup("NeighborPopup"))
     {
         if (ImGui::BeginListBox("##neighbors", ImVec2(300, 200)))
         {
-            neighbors = graph.getSortedNeighbors(currentNodeId); // db должен быть доступен
+            neighbors = graph.getSortedNeighbors(currentNodeId);
             for (auto &n : neighbors)
             {
-                ImGui::Text("%s (%d)", n.name.c_str(), n.visitors);
+                std::string clear_name;
+                std::transform(n.name.begin(), n.name.end(), std::back_inserter(clear_name), [](auto ch)
+                               {
+                    if (ch == '_')
+                    {
+                        return ' ';
+                    }
+                    return ch; });
+                if (ImGui::Selectable((clear_name + " (" + std::to_string(n.visitors) + ")").c_str()))
+                {
+                    loadSubGraph(graph, n.id);
+                    ImGui::CloseCurrentPopup();
+                    break;
+                }
             }
             ImGui::EndListBox();
         }
+
+        // Добавляем кнопку "Открыть в браузере"
+        if (ImGui::Button("Open in Browser"))
+        {
+            const auto it = graph.nodes.find(currentNodeId);
+            if (it != graph.nodes.end())
+            {
+                std::string url = "https://en.wikipedia.org/wiki/" + it->second.label;
+
+                std::transform(url.begin(), url.end(), url.begin(), [](auto ch)
+                               { if (ch==' ') {return '_'; } return ch; });
+#if defined(_WIN32)
+                std::string command = "start " + url;
+#elif defined(__APPLE__)
+                std::string command = "open " + url;
+#else // Linux
+                std::string command = "xdg-open " + url;
+#endif
+                system(command.c_str());
+            }
+        }
         ImGui::EndPopup();
     }
-    std::cout << "render.cpp 138" << std::endl;
+
     for (auto &[id, node] : graph.nodes)
     {
         if (ImNodes::IsNodeSelected(id))
@@ -146,7 +172,7 @@ void renderGraph(Graph &graph)
             break;
         }
     }
-    std::cout << "render.cpp 147" << std::endl;
+
     if (ImGui::IsMouseDoubleClicked(0))
     {
         for (auto &[id, node] : graph.nodes)
@@ -160,5 +186,4 @@ void renderGraph(Graph &graph)
             }
         }
     }
-    std::cout << "render.cpp 161" << std::endl;
 }

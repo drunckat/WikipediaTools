@@ -30,13 +30,14 @@ struct Edge
 class Graph
 {
 public:
-    Graph(DatabaseManager &dbManager);
+    Graph(database::DatabaseManager &dbManager);
 
+    Graph(Graph const &) = delete;
     std::unordered_map<int, Node> nodes;
     std::vector<Edge> edges;
     std::vector<NeighborInfo> getSortedNeighbors(int nodeId);
     void loadFromDatabase(std::optional<int> startPageId = std::nullopt);
 
 private:
-    DatabaseManager &db;
+    database::DatabaseManager &db;
 };
