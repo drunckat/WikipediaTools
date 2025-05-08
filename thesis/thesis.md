@@ -7,4 +7,12 @@ https://habr.com/ru/articles/848274/
 2) https://scholar.google.com
 https://web.archive.org/web/20120128021213id_/http://www.ics.uci.edu/~yganjisa/papers/2009-CASoN.pdf
 https://arxiv.org/pdf/1611.02508
-3) 
+3) Инженерия знаний
+3.1) Знания и способы их представления
+
+Во второй главе сравнить с аналогами моё приложение
+
+Сделать диаграмму классов
+
+Crowler
+SpyderWeb
